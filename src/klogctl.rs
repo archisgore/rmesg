@@ -521,19 +521,19 @@ mod test {
     fn test_parse_serialize() {
         let line1 = "<6>a.out[4054]: segfault at 7ffd5503d358 ip 00007ffd5503d358 sp 00007ffd5503d258 error 15";
         let entries1 = entries_from_lines(line1).unwrap();
-        let e1r = entries1.get(0).unwrap();
+        let e1r = entries1.first().unwrap();
         let line1again = e1r.to_klog_str().unwrap();
         assert_eq!(line1, line1again);
 
         let line2 = "<7>[   233434.343533] a.out[4054]: segfault at 7ffd5503d358 ip 00007ffd5503d358 sp 00007ffd5503d258 error 15";
         let entries2 = entries_from_lines(line2).unwrap();
-        let e2r = entries2.get(0).unwrap();
+        let e2r = entries2.first().unwrap();
         let line2again = e2r.to_klog_str().unwrap();
         assert_eq!(line2, line2again);
 
         let line3 = "233434.343533] a.out[4054]: segfault at 7ffd5503d358 ip 00007ffd5503d358 sp 00007ffd5503d258 error 15";
         let entries3 = entries_from_lines(line3).unwrap();
-        let e3r = entries3.get(0).unwrap();
+        let e3r = entries3.first().unwrap();
         let line3again = e3r.to_klog_str().unwrap();
         assert_eq!(line3, line3again);
     }
