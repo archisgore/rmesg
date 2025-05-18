@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use futures::stream::StreamExt;
 use rand::Rng;
 use rmesg::{
@@ -6,24 +6,40 @@ use rmesg::{
     klogctl::{klog, KLogEntries},
     kmsgfile::{kmsg, KMsgEntriesIter, KMsgEntriesStream},
 };
+use std::hint::black_box;
 use std::time::Duration;
+
+fn generate_random_usize() -> usize {
+    let mut rng = rand::rng();
+    rng.random_range(0..usize::MAX)
+}
+
+fn generate_random_bool() -> bool {
+    let mut rng = rand::rng();
+    rng.random_bool(0.5)
+}
+
+fn generate_random_duration() -> Duration {
+    let mut rng = rand::rng();
+    Duration::from_secs_f64(rng.random::<f64>())
+}
 
 fn random_entry() -> Entry {
     Entry {
-        timestamp_from_system_start: match rand::thread_rng().gen_bool(0.5) {
-            true => Some(Duration::from_secs_f64(rand::thread_rng().gen::<f64>())),
+        timestamp_from_system_start: match generate_random_bool() {
+            true => Some(generate_random_duration()),
             false => None,
         },
-        facility: match rand::thread_rng().gen_bool(0.5) {
+        facility: match generate_random_bool() {
             true => Some(LogFacility::Kern),
             false => None,
         },
-        level: match rand::thread_rng().gen_bool(0.5) {
+        level: match generate_random_bool() {
             true => Some(LogLevel::Info),
             false => None,
         },
-        sequence_num: match rand::thread_rng().gen_bool(0.5) {
-            true => Some(rand::thread_rng().gen::<usize>()),
+        sequence_num: match generate_random_bool() {
+            true => Some(generate_random_usize()),
             false => None,
         },
         message: "Some very long string with no purpose. Lorem. Ipsum. Something Something."
@@ -47,7 +63,7 @@ fn entry_to_klog_str() {
 }
 
 fn kmsg_read() {
-    let file = match rand::thread_rng().gen_bool(0.5) {
+    let file = match generate_random_bool() {
         true => Some("/dev/kmsg".to_owned()),
         false => None,
     };
@@ -56,11 +72,11 @@ fn kmsg_read() {
 }
 
 fn kmsg_iter_read() {
-    let file = match rand::thread_rng().gen_bool(0.5) {
+    let file = match generate_random_bool() {
         true => Some("/dev/kmsg".to_owned()),
         false => None,
     };
-    let entries = KMsgEntriesIter::with_options(file, rand::thread_rng().gen_bool(0.5)).unwrap();
+    let entries = KMsgEntriesIter::with_options(file, generate_random_bool()).unwrap();
     let mut count = 0;
     for entry in entries {
         black_box(entry).unwrap();
@@ -72,11 +88,11 @@ fn kmsg_iter_read() {
 }
 
 async fn kmsg_stream_read() {
-    let file = match rand::thread_rng().gen_bool(0.5) {
+    let file = match generate_random_bool() {
         true => Some("/dev/kmsg".to_owned()),
         false => None,
     };
-    let mut entries = KMsgEntriesStream::with_options(file, rand::thread_rng().gen_bool(0.5))
+    let mut entries = KMsgEntriesStream::with_options(file, generate_random_bool())
         .await
         .unwrap();
     let mut count = 0;
