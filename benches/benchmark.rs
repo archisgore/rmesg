@@ -11,20 +11,20 @@ use std::time::Duration;
 
 fn random_entry() -> Entry {
     Entry {
-        timestamp_from_system_start: match rand::rng().gen_bool(0.5) {
+        timestamp_from_system_start: match rand::rng().random_bool(0.5) {
             true => Some(Duration::from_secs_f64(rand::rng().gen::<f64>())),
             false => None,
         },
-        facility: match rand::rng().gen_bool(0.5) {
+        facility: match rand::rng().random_bool(0.5) {
             true => Some(LogFacility::Kern),
             false => None,
         },
-        level: match rand::rng().gen_bool(0.5) {
+        level: match rand::rng().random_bool(0.5) {
             true => Some(LogLevel::Info),
             false => None,
         },
-        sequence_num: match rand::rng().gen_bool(0.5) {
-            true => Some(rand::rng().gen::<usize>()),
+        sequence_num: match rand::rng().random_bool(0.5) {
+            true => Some(rand::rng().random::<usize>()),
             false => None,
         },
         message: "Some very long string with no purpose. Lorem. Ipsum. Something Something."
@@ -48,7 +48,7 @@ fn entry_to_klog_str() {
 }
 
 fn kmsg_read() {
-    let file = match rand::rng().gen_bool(0.5) {
+    let file = match rand::rng().random_bool(0.5) {
         true => Some("/dev/kmsg".to_owned()),
         false => None,
     };
@@ -57,11 +57,11 @@ fn kmsg_read() {
 }
 
 fn kmsg_iter_read() {
-    let file = match rand::rng().gen_bool(0.5) {
+    let file = match rand::rng().random_bool(0.5) {
         true => Some("/dev/kmsg".to_owned()),
         false => None,
     };
-    let entries = KMsgEntriesIter::with_options(file, rand::rng().gen_bool(0.5)).unwrap();
+    let entries = KMsgEntriesIter::with_options(file, rand::rng().random_bool(0.5)).unwrap();
     let mut count = 0;
     for entry in entries {
         black_box(entry).unwrap();
@@ -73,11 +73,11 @@ fn kmsg_iter_read() {
 }
 
 async fn kmsg_stream_read() {
-    let file = match rand::rng().gen_bool(0.5) {
+    let file = match rand::rng().random_bool(0.5) {
         true => Some("/dev/kmsg".to_owned()),
         false => None,
     };
-    let mut entries = KMsgEntriesStream::with_options(file, rand::rng().gen_bool(0.5))
+    let mut entries = KMsgEntriesStream::with_options(file, rand::rng().random_bool(0.5))
         .await
         .unwrap();
     let mut count = 0;
