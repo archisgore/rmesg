@@ -1,3 +1,7 @@
+[![Build Status](https://github.com/archisgore/rmesg/actions/workflows/build.yml/badge.svg)](https://github.com/archisgore/rmesg/actions/workflows/build.yml)
+
+[![Release](https://github.com/archisgore/rmesg/actions/workflows/release.yml/badge.svg)](https://github.com/archisgore/rmesg/actions/workflows/release.yml)
+
 # rmesg
 
 A 'dmesg' implementation in Rust
