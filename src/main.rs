@@ -178,7 +178,7 @@ mod tests {
             );
 
         let matches = cmd.try_get_matches_from(args).unwrap();
-        
+
         let follow = matches.get_flag("follow");
         let clear = matches.get_flag("clear");
         let raw = matches.get_flag("raw");
