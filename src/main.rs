@@ -94,31 +94,35 @@ fn parse_args() -> Options {
         .arg(
             Arg::new("follow")
                 .short('f')
+                .num_args(0)
+                .required(false)
                 .help("When specified, follows logs (like tail -f)"),
         )
         .arg(
             Arg::new("clear")
                 .short('c')
+                .num_args(0)
                 .help("Clear ring buffer after printing"),
         )
         .arg(
             Arg::new("raw")
                 .short('r')
+                .num_args(0)
                 .help("Print raw data as it came from the source backend."),
         )
         .arg(
             Arg::new("backend")
                 .short('b')
-                .takes_value(true)
-                .possible_values(["klogctl", "devkmsg"])
+                .num_args(1)
+                .value_parser(["klogctl", "devkmsg"])
                 .help("Select backend from where to read the logs. klog is the syslog/klogctl system call through libc. kmsg is the /dev/kmsg file."),
         )
         .get_matches();
 
-    let follow = !matches!(matches.occurrences_of("follow"), 0);
-    let clear = !matches!(matches.occurrences_of("clear"), 0);
-    let raw = !matches!(matches.occurrences_of("raw"), 0);
-    let backend = match matches.value_of("backend") {
+    let follow = matches.contains_id("follow");
+    let clear = matches.contains_id("clear");
+    let raw = matches.contains_id("raw");
+    let backend = match matches.get_one::<String>("backend").map(|s| s.as_str()) {
         None => rmesg::Backend::Default,
         Some("klogctl") => rmesg::Backend::KLogCtl,
         Some("devkmsg") => rmesg::Backend::DevKMsg,
