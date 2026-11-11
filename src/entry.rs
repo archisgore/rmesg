@@ -48,7 +48,7 @@ impl Entry {
             write!(retstr, "<{}>", faclev)?;
 
             if let Some(ts) = self.timestamp_from_system_start {
-                write!(retstr, "[{: >16.6}]", ts.as_secs_f64())?;
+                write!(retstr, "[{: >16.6}] ", ts.as_secs_f64())?;
             }
 
             write!(retstr, "{}", self.message)?;
@@ -201,7 +201,7 @@ mod tests {
             sequence_num: Some(10),
             message: "Test message".to_owned(),
         };
-        let expected_serialization = "<6>[    24241.325252]Test message";
+        let expected_serialization = "<6>[    24241.325252] Test message";
 
         let boxed_entry_struct = Box::new(entry_struct.clone());
 

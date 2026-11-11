@@ -3,7 +3,7 @@
 ///
 use clap::{Arg, Command};
 use futures_util::stream::StreamExt;
-use std::error::Error;
+use std::process::ExitCode;
 
 #[derive(Debug)]
 struct Options {
@@ -14,57 +14,33 @@ struct Options {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> ExitCode {
     let opts = parse_args();
 
     if !opts.follow {
-        nofollow(opts);
-    } else {
-        let mut entries = match rmesg::logs_stream(opts.backend, opts.clear, opts.raw).await {
-            Ok(entries) => entries,
-            Err(e) => {
-                eprintln!("Unable to get logs stream: {}", e);
+        return nofollow(opts);
+    }
 
-                if let rmesg::error::RMesgError::OperationNotPermitted(_) = e {
-                    eprintln!("\nHint: Try using 'sudo' or run the program as root/superuser.");
-                }
+    let mut entries = match rmesg::logs_stream(opts.backend, opts.clear, opts.raw).await {
+        Ok(entries) => entries,
+        Err(e) => return report_error("Unable to get logs stream", e),
+    };
 
-                return Ok(());
-            }
-        };
-
-        while let Some(result) = entries.next().await {
-            match result {
-                Ok(entry) => println!("{}", entry),
-                Err(e) => {
-                    eprintln!("Unable to get logs stream: {}", e);
-
-                    if let rmesg::error::RMesgError::OperationNotPermitted(_) = e {
-                        eprintln!("\nHint: Try using 'sudo' or run the program as root/superuser.");
-                    }
-
-                    return Ok(());
-                }
-            }
+    while let Some(result) = entries.next().await {
+        match result {
+            Ok(entry) => println!("{}", entry),
+            Err(e) => return report_error("Unable to get logs stream", e),
         }
     }
 
-    Ok(())
+    ExitCode::SUCCESS
 }
 
-fn nofollow(opts: Options) {
+fn nofollow(opts: Options) -> ExitCode {
     if opts.raw {
         match rmesg::logs_raw(opts.backend, opts.clear) {
-            Ok(raw) => {
-                print!("{}", raw)
-            }
-            Err(e) => {
-                eprintln!("Unable to get raw logs: {}", e);
-
-                if let rmesg::error::RMesgError::OperationNotPermitted(_) = e {
-                    eprintln!("\nHint: Try using 'sudo' or run the program as root/superuser.");
-                }
-            }
+            Ok(raw) => print!("{}", raw),
+            Err(e) => return report_error("Unable to get raw logs", e),
         }
     } else {
         match rmesg::log_entries(opts.backend, opts.clear) {
@@ -73,20 +49,27 @@ fn nofollow(opts: Options) {
                     println!("{}", entry)
                 }
             }
-            Err(e) => {
-                eprintln!("Unable to get log entries: {}", e);
-
-                if let rmesg::error::RMesgError::OperationNotPermitted(_) = e {
-                    eprintln!("\nHint: Try using 'sudo' or run the program as root/superuser.");
-                }
-            }
+            Err(e) => return report_error("Unable to get log entries", e),
         }
     }
+
+    ExitCode::SUCCESS
 }
 
-fn parse_args() -> Options {
-    let matches = Command::new("rmesg: A 'dmesg' port onto Rust")
-        .version("0.2.0")
+/// Prints the error (with a privilege hint where relevant) and returns a failing exit code.
+fn report_error(context: &str, e: rmesg::error::RMesgError) -> ExitCode {
+    eprintln!("{}: {}", context, e);
+
+    if let rmesg::error::RMesgError::OperationNotPermitted(_) = e {
+        eprintln!("\nHint: Try using 'sudo' or run the program as root/superuser.");
+    }
+
+    ExitCode::FAILURE
+}
+
+fn build_command() -> Command {
+    Command::new("rmesg: A 'dmesg' port onto Rust")
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Archis Gore <me@archisgore.com>")
         .about(
             "Reads (and prints) the kernel log buffer. Does not support all dmesg options (yet).",
@@ -117,13 +100,11 @@ fn parse_args() -> Options {
                 .short('b')
                 .num_args(1)
                 .value_parser(["klogctl", "devkmsg"])
-                .help("Select backend from where to read the logs. klog is the syslog/klogctl system call through libc. kmsg is the /dev/kmsg file."),
+                .help("Select backend from where to read the logs. klogctl is the syslog/klogctl system call through libc. devkmsg is the /dev/kmsg file."),
         )
-        .get_matches();
+}
 
-    let follow = matches.get_flag("follow");
-    let clear = matches.get_flag("clear");
-    let raw = matches.get_flag("raw");
+fn options_from(matches: &clap::ArgMatches) -> Options {
     let backend = match matches.get_one::<String>("backend").map(|s| s.as_str()) {
         None => rmesg::Backend::Default,
         Some("klogctl") => rmesg::Backend::KLogCtl,
@@ -132,11 +113,15 @@ fn parse_args() -> Options {
     };
 
     Options {
-        follow,
-        clear,
-        raw,
+        follow: matches.get_flag("follow"),
+        clear: matches.get_flag("clear"),
+        raw: matches.get_flag("raw"),
         backend,
     }
+}
+
+fn parse_args() -> Options {
+    options_from(&build_command().get_matches())
 }
 
 #[cfg(test)]
@@ -144,57 +129,7 @@ mod tests {
     use super::*;
 
     fn parse_args_from(args: &[&str]) -> Options {
-        let cmd = Command::new("rmesg")
-            .version("0.2.0")
-            .author("Archis Gore <me@archisgore.com>")
-            .about("Reads (and prints) the kernel log buffer. Does not support all dmesg options (yet).")
-            .arg(
-                Arg::new("follow")
-                    .short('f')
-                    .num_args(0)
-                    .action(clap::ArgAction::SetTrue)
-                    .help("When specified, follows logs (like tail -f)"),
-            )
-            .arg(
-                Arg::new("clear")
-                    .short('c')
-                    .num_args(0)
-                    .action(clap::ArgAction::SetTrue)
-                    .help("Clear ring buffer after printing"),
-            )
-            .arg(
-                Arg::new("raw")
-                    .short('r')
-                    .num_args(0)
-                    .action(clap::ArgAction::SetTrue)
-                    .help("Print raw data as it came from the source backend."),
-            )
-            .arg(
-                Arg::new("backend")
-                    .short('b')
-                    .num_args(1)
-                    .value_parser(["klogctl", "devkmsg"])
-                    .help("Select backend from where to read the logs. klog is the syslog/klogctl system call through libc. kmsg is the /dev/kmsg file."),
-            );
-
-        let matches = cmd.try_get_matches_from(args).unwrap();
-
-        let follow = matches.get_flag("follow");
-        let clear = matches.get_flag("clear");
-        let raw = matches.get_flag("raw");
-        let backend = match matches.get_one::<String>("backend").map(|s| s.as_str()) {
-            None => rmesg::Backend::Default,
-            Some("klogctl") => rmesg::Backend::KLogCtl,
-            Some("devkmsg") => rmesg::Backend::DevKMsg,
-            Some(v) => panic!("Invalid backend value: {}", v),
-        };
-
-        Options {
-            follow,
-            clear,
-            raw,
-            backend,
-        }
+        options_from(&build_command().try_get_matches_from(args).unwrap())
     }
 
     #[test]
@@ -264,5 +199,20 @@ mod tests {
     #[should_panic]
     fn test_invalid_backend() {
         parse_args_from(&["rmesg", "-b", "invalid"]);
+    }
+
+    #[test]
+    fn test_version_matches_crate_version() {
+        assert_eq!(
+            build_command().get_version(),
+            Some(env!("CARGO_PKG_VERSION"))
+        );
+    }
+
+    #[test]
+    fn test_backend_help_names_real_values() {
+        let help = build_command().render_help().to_string();
+        assert!(help.contains("klogctl is the syslog/klogctl system call"));
+        assert!(help.contains("devkmsg is the /dev/kmsg file"));
     }
 }

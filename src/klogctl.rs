@@ -82,7 +82,7 @@ lazy_static! {
     static ref RE_ENTRY_WITH_TIMESTAMP: Regex = Regex::new(
         r"(?x)^
         [[:space:]]*<(?P<faclevstr>[[:digit:]]*)>
-        [[:space:]]*([\[][[:space:]]*(?P<timestampstr>[[:digit:]]*\.[[:digit:]]*)[\]])?
+        [[:space:]]*([\[][[:space:]]*(?P<timestampstr>[[:digit:]]*\.[[:digit:]]*)[\]][[:space:]]?)?
         (?P<message>.*)
         $"
     )
@@ -517,6 +517,15 @@ mod test {
                 break;
             }
         }
+    }
+
+    #[test]
+    fn test_message_has_no_separator_space() {
+        let entry = entry_from_line("<6>[   12.345678] eth0: link up").unwrap();
+        assert_eq!(entry.message, "eth0: link up");
+
+        let no_ts = entry_from_line("<6>eth0: link up").unwrap();
+        assert_eq!(no_ts.message, "eth0: link up");
     }
 
     #[test]
