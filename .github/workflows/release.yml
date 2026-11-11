@@ -6,6 +6,9 @@ on:
     tags:
       - v*
 
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -13,27 +16,35 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: ~/.cargo-ci/registry
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
 
       - name: Style (rustfmt)
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo fmt -- --check
+        run: docker run -v $HOME/.cargo-ci/registry:/opt/cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo fmt -- --check
 
         # Allow this lint: -D clippy::field-reassign-with-default
         # Due to this: https://github.com/GREsau/schemars/pull/65
       - name: Lint (Clippy)
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo clippy -- -D warnings
+        run: docker run -v $HOME/.cargo-ci/registry:/opt/cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo clippy -- -D warnings
 
       - name: Test
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo test
+        run: docker run -v $HOME/.cargo-ci/registry:/opt/cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo test
 
       - name: Test cargo install
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo install --path . -f
+        run: docker run -v $HOME/.cargo-ci/registry:/opt/cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo install --path . -f
 
       - name: Build Release executable
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo build --release --target x86_64-unknown-linux-musl
+        run: docker run -v $HOME/.cargo-ci/registry:/opt/cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo build --release --target x86_64-unknown-linux-musl
 
       - name: Create Release and upload rmesg executable
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ github.ref_name }}
           draft: false
