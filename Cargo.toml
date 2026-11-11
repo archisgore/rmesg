@@ -1,6 +1,6 @@
 [package]
 name = "rmesg"
-version = "1.0.24"
+version = "1.0.25"
 authors = ["Archis Gore <me@archisgore.com>"]
 edition = "2018"
 license = "Apache-2.0"
