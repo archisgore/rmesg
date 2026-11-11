@@ -107,6 +107,7 @@ lazy_static! {
 ///
 /// The UX is left to the consumer.
 ///
+#[cfg_attr(not(any(feature = "sync", feature = "async")), allow(dead_code))]
 pub struct KLogEntries {
     clear: bool,
     entries: Vec<Entry>,
@@ -172,6 +173,7 @@ impl KLogEntries {
     /// are set (possibly through the provided function `kernel_log_timestamps_enable`) before
     /// polling/iterating.
     ///
+    #[cfg_attr(not(any(feature = "sync", feature = "async")), allow(dead_code))]
     fn poll(&mut self) -> Result<usize, RMesgError> {
         self.last_poll = SystemTime::now();
 

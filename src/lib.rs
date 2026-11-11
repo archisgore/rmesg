@@ -149,6 +149,7 @@ pub async fn logs_stream(
     }
 }
 
+#[cfg(any(feature = "sync", feature = "async"))]
 fn klog_entries_only_if_timestamp_enabled(
     clear: bool,
 ) -> Result<klogctl::KLogEntries, error::RMesgError> {
