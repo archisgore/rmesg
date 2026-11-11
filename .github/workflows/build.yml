@@ -18,10 +18,10 @@ jobs:
         run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo clippy --workspace --all-targets --all-features -- -D warnings
 
       - name: Build
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo build-all-features --workspace
+        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t ghcr.io/archisgore/rust-dev-env:latest cargo build-all-features
 
       - name: Test
-        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo test-all-features --workspace
+        run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo test-all-features
 
       - name: Test cargo install
         run: docker run -v cargo-cache:/root/.cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo install --path . -f
