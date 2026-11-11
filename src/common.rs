@@ -1,5 +1,5 @@
 use crate::entry::{EntryParsingError, LogFacility, LogLevel};
-use num::FromPrimitive;
+use num_traits::FromPrimitive;
 use std::any::type_name;
 use std::fmt::Display;
 use std::str::FromStr;
