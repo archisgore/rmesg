@@ -35,7 +35,7 @@ use std::iter::Iterator;
 #[cfg(feature = "sync")]
 use std::thread;
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 // Can be removed once upstream libc supports it.
 extern "C" {
     fn klogctl(syslog_type: libc::c_int, buf: *mut libc::c_char, len: libc::c_int) -> libc::c_int;
@@ -44,7 +44,7 @@ extern "C" {
 /// Mark this as unsafe to be compliant with the Linux/Libc variant
 /// Allows compilation on non-linux platforms which can be useful for
 /// portability of downstream tools without complex conditionals.
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
 unsafe fn klogctl(
     _syslog_type: libc::c_int,
     _buf: *mut libc::c_char,
@@ -449,7 +449,7 @@ pub fn safely_wrapped_klogctl(klogtype: KLogType, buf_u8: &mut [u8]) -> Result<u
 /**********************************************************************************/
 // Tests! Tests! Tests!
 
-#[cfg(all(test, target_os = "linux"))]
+#[cfg(all(test, any(target_os = "linux", target_os = "android")))]
 mod test {
     use super::*;
 
