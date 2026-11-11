@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use futures::stream::StreamExt;
-use rand::Rng;
+use rand::RngExt;
 use rmesg::{
     entry::{Entry, LogFacility, LogLevel},
     klogctl::{klog, KLogEntries},
