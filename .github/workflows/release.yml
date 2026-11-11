@@ -50,3 +50,8 @@ jobs:
           draft: false
           prerelease: false
           files: ./target/x86_64-unknown-linux-musl/release/rmesg
+
+      # The container runs as root; make the cache dir readable so actions/cache can save it.
+      - name: Fix cargo cache ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "$HOME/.cargo-ci"

@@ -36,3 +36,8 @@ jobs:
 
       - name: Test cargo install
         run: docker run -v $HOME/.cargo-ci/registry:/opt/cargo/registry -v $PWD:/volume --rm -t --privileged ghcr.io/archisgore/rust-dev-env:latest cargo install --path . -f
+
+      # The container runs as root; make the cache dir readable so actions/cache can save it.
+      - name: Fix cargo cache ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "$HOME/.cargo-ci"
