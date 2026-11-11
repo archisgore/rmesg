@@ -26,14 +26,13 @@ default = ["async"]
 # packages, but they are strictly optional. Note that `session` is not a package
 # but rather another feature listed in this manifest.
 sync = []
-async = ["futures", "futures-util", "tokio", "pin-project"]
+async = ["clap", "futures", "futures-util", "tokio", "pin-project"]
 extra-traits = ["serde"]
 
 [dependencies]
 libc = "0.2.180"
 cfg-if = "1.0.4"
 errno = "0.3.14"
-clap = "4.5.54"
 lazy_static = "1.5.0"
 regex = "1.12.2"
 strum = "0.27.2"
@@ -46,6 +45,7 @@ nonblock = "0.2.0"
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 # Optional - only enabled through the "async" feature
+clap = { version = "4.5.54", optional = true }
 futures = { version = "0.3.31", optional = true }
 futures-util = { version = "0.3.31", optional = true }
 tokio = { version = "1.49.0", features = ["rt", "fs", "io-util", "macros", "time"], optional = true }
